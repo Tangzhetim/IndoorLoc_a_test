@@ -8,9 +8,6 @@ import pickle as pk
 import sklearn.preprocessing
 
 
-# def dataset_limitaion(df: pd.DataFrame):
-#     df[]
-
 def increase_pred_input_nd(num, df_lim: pd.DataFrame, data_set: int):
     """generate input value to prediction, which base on uniform random
 
@@ -54,20 +51,9 @@ def dump_and_load_model(m):
             pk.dump(m, _f)  # Serialize object, save object obj to file f
             return m
 
-
+#n_dim is the index of AP it should be 0-519 WAP001-WAP520
 def plot(xy, z, xy_pred, z_pred, n_dim):
-    """plot real data and predicted data
-    all input data are n*1 shape
-
-    Args:
-        xy (np.ndarray): real data x and y coordination
-        z (np.ndarray): real data rss
-        xy_pred (np.ndarray): prediction x and y coordication
-        z_pred (np.ndarray): prediction rss
-        n_dim (int): plot the specific dimension.
-    """
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    # ax.plot3D(x, y, z, 'gray')
     x_axis = xy[:, 0]
     y_axis = xy[:, 1]
 
@@ -81,9 +67,6 @@ def plot(xy, z, xy_pred, z_pred, n_dim):
     plt.legend(loc='upper left')
     plt.show()
 
-    # read file data into dataframe
-
-
 # read the data of floor 0
 with open("./data_silce/building0.csv", "r") as _file:
     # all buildings incloud, except for the useless value
@@ -95,8 +78,8 @@ df = df_raw.groupby(["LONGITUDE", "LATITUDE", "FLOOR"], as_index=False).mean()
 
 df.to_csv('df.csv',index=False)
 # TODO: input_dim is 2 (LONGITUDE and Latitude) or 4 (plus BuildingID and Floor)?
-# kernel = GPy.util.multioutput.ICM(
-#     input_dim=2, num_outputs=520, kernel=GPy.kern.RBF(2))
+kernel_RBF = GPy.util.multioutput.ICM(
+    input_dim=3, num_outputs=520, kernel=GPy.kern.RBF(3))
 
 xy = df.loc[:, "LONGITUDE":"FLOOR"].to_numpy()
 # xy = df.loc[:, "LONGITUDE":"LATITUDE"].to_numpy()
@@ -112,7 +95,7 @@ floor = floor.reshape(floor.shape[0],1)
 
 # kernel = RBF * matern52  Squared exponential (SE) kernel or Radial Basis Function（RBF）kernel
 #TODO: why choose matern52, the inout of this kernel function can not be 3?
-kernel = GPy.util.multioutput.LCM(
+kernel_Matern52 = GPy.util.multioutput.LCM(
     input_dim=3, num_outputs=520,
     kernels_list=[GPy.kern.Matern52(3)])  # Matern Radial-basis function kernel (aka squared-exponential kernel)
 
@@ -136,6 +119,7 @@ z = standarder.transform(z_original)
 
     :param kernel: a GPy kernel ** Coregionalized, defaults to RBF ** Coregionalized
 '''
+kernel = kernel_RBF * kernel_Matern52
 m = GPy.models.GPCoregionalizedRegression([xy], [z],
                                           kernel=kernel)  # Gaussian Process model for heteroscedastic multioutput regression
 m = dump_and_load_model(m)
@@ -146,7 +130,9 @@ x_max = xy[:, 0].max()
 y_min = xy[:, 1].min()
 y_max = xy[:, 1].max()
 l = []
-for _ in range(20000):
+fake_data_for_whole_building = 200
+fake_data_for_floor = fake_data_for_whole_building/4
+for _ in range(fake_data_for_whole_building):
     l.append([random.uniform(x_min, x_max),
               random.uniform(y_min, y_max), data_set])
 xy_pred = np.array(l)
@@ -158,14 +144,26 @@ z_pred_ori = standarder.inverse_transform(z_pred).round()
 z_pred_ori_a = pd.DataFrame(z_pred_ori)
 #z_pred_ori_a.to_csv("Data_with_building0.csv",index=0)
 
-plot(xy, z, xy_pred, z_pred, 8)
+#plot(xy, z, xy_pred, z_pred, 1)
+plot(xy,z_original,xy_pred,z_pred_ori,0)
+
 df_new = pd.DataFrame(z_pred_ori, columns=df_raw.columns[:520]).astype("int64")
 
 df_new["LONGITUDE"] = xy_pred[:, 0]
 df_new["LATITUDE"] = xy_pred[:, 1]
-df_new["SPACEID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
-df_new["RELATIVEPOSITION"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
-df_new["BUILDINGID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
-df_new["FLOOR"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
+#df_new["SPACEID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
+#df_new["RELATIVEPOSITION"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
+#df_new["BUILDINGID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
+df_floor = np.zeros(xy_pred[:, 0].shape, dtype=int)
+df_floor[50:100] += 1
+df_floor[101:150] += 2
+df_floor[151:200] += 3
+df_new["FLOOR"] = df_floor
 with open("./trainingData2.csv", "w") as f:
     f.write(df_new.to_csv(index=False))
+z = pd.DataFrame(z)
+z_original = pd.DataFrame(z_original)
+z_pred = pd.DataFrame(z_pred)
+z.to_csv('z.csv',index=False)
+z_original.to_csv('z_original.csv',index=False)
+z_pred.to_csv('z_pred.csv',index=False)
