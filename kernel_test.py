@@ -83,8 +83,9 @@ with open("./data_silce/building_0_floor_0.csv", "r") as _file:
     df_raw = pd.read_csv(_file).loc[:, "WAP001":"BUILDINGID"]
 
 # get mean of data which on the same position
-df = df_raw.groupby(["LONGITUDE", "LATITUDE", "FLOOR"], as_index=False).mean()
-
+#df = df_raw.groupby(["LONGITUDE", "LATITUDE", "FLOOR"], as_index=False).mean()
+# if do not get the mean of the data
+df = df_raw
 df.to_csv('df.csv',index=False)
 kernel_RBF = GPy.util.multioutput.ICM(
     input_dim=3, num_outputs=520, kernel=GPy.kern.RBF(3))
@@ -94,6 +95,7 @@ xy = df.loc[:, "LONGITUDE":"FLOOR"].to_numpy()
 print(xy)
 floor = df_raw.loc[:,"FLOOR"].to_numpy()
 floor = floor.reshape(floor.shape[0],1)
+
 # xy_floor = np.concatenate((xy, floor), axis=1)
 
 
@@ -126,8 +128,7 @@ x_max = xy[:, 0].max()
 y_min = xy[:, 1].min()
 y_max = xy[:, 1].max()
 l = []
-fake_data_for_whole_building = 200
-fake_data_for_floor = fake_data_for_whole_building/4
+fake_data_for_whole_building = 1059
 for _ in range(fake_data_for_whole_building):
     l.append([random.uniform(x_min, x_max),
               random.uniform(y_min, y_max), data_set])
@@ -150,16 +151,14 @@ df_new["LATITUDE"] = xy_pred[:, 1]
 df_new["SPACEID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
 df_new["RELATIVEPOSITION"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
 df_new["BUILDINGID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
-df_floor = np.zeros(xy_pred[:, 0].shape, dtype=int)
-# df_floor[50:100] += 1
-# df_floor[101:150] += 2
-# df_floor[151:200] += 3
+#df_floor = np.zeros(xy_pred[:, 0].shape, dtype=int)
+df_floor = np.random.choice(a=[0,3,6,9], size=fake_data_for_whole_building, replace=True, p=[0.235,0.270,0.270,0.225])
 df_new["FLOOR"] = df_floor
 with open("./trainingData2.csv", "w") as f:
     f.write(df_new.to_csv(index=False))
-z = pd.DataFrame(z)
-z_original = pd.DataFrame(z_original)
-z_pred = pd.DataFrame(z_pred)
-z.to_csv('z.csv',index=False)
-z_original.to_csv('z_original.csv',index=False)
-z_pred.to_csv('z_pred.csv',index=False)
+# z = pd.DataFrame(z)
+# z_original = pd.DataFrame(z_original)
+# z_pred = pd.DataFrame(z_pred)
+# z.to_csv('z.csv',index=False)
+# z_original.to_csv('z_original.csv',index=False)
+# z_pred.to_csv('z_pred.csv',index=False)
