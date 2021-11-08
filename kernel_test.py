@@ -154,7 +154,7 @@ df_new["BUILDINGID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
 #df_floor = np.zeros(xy_pred[:, 0].shape, dtype=int)
 df_floor = np.random.choice(a=[0,3,6,9], size=fake_data_for_whole_building, replace=True, p=[0.235,0.270,0.270,0.225])
 df_new["FLOOR"] = df_floor
-with open("./trainingData2.csv", "w") as f:
+with open("./trainingData2_fake.csv", "w") as f:
     f.write(df_new.to_csv(index=False))
 # z = pd.DataFrame(z)
 # z_original = pd.DataFrame(z_original)
