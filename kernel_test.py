@@ -77,7 +77,7 @@ def plot(xy, z, xy_pred, z_pred, n_dim):
     plt.show()
 
 # read the data of floor 0
-with open("./data_silce/building_0_floor_0.csv", "r") as _file:
+with open("./data_silce/building0.csv", "r") as _file:
     # all buildings incloud, except for the useless value
     # df_raw: pd.DataFrame = pd.read_csv(_file).loc[:, "LONGITUDE":"BUILDINGID"]
     df_raw = pd.read_csv(_file).loc[:, "WAP001":"BUILDINGID"]
@@ -128,7 +128,7 @@ x_max = xy[:, 0].max()
 y_min = xy[:, 1].min()
 y_max = xy[:, 1].max()
 l = []
-fake_data_for_whole_building = 1059
+fake_data_for_whole_building = 5249
 for _ in range(fake_data_for_whole_building):
     l.append([random.uniform(x_min, x_max),
               random.uniform(y_min, y_max), data_set])
