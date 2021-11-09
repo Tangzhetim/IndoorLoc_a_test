@@ -148,9 +148,6 @@ df_new = pd.DataFrame(z_pred_ori, columns=df_raw.columns[:520]).astype("int64")
 
 df_new["LONGITUDE"] = xy_pred[:, 0]
 df_new["LATITUDE"] = xy_pred[:, 1]
-df_new["SPACEID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
-df_new["RELATIVEPOSITION"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
-df_new["BUILDINGID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
 #df_floor = np.zeros(xy_pred[:, 0].shape, dtype=int)
 df_floor = np.random.choice(a=[0,3,6,9], size=fake_data_for_whole_building, replace=True, p=[0.235,0.270,0.270,0.225])
 df_new["FLOOR"] = df_floor
@@ -162,3 +159,9 @@ with open("./trainingData2_fake.csv", "w") as f:
 # z.to_csv('z.csv',index=False)
 # z_original.to_csv('z_original.csv',index=False)
 # z_pred.to_csv('z_pred.csv',index=False)
+df_new["BUILDINGID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
+df_new["SPACEID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
+df_new["RELATIVEPOSITION"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
+# df_new["USERID"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
+# df_new["PHONEID"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
+# df_new["TIMESTAMP"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
