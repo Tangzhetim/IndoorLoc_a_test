@@ -9,20 +9,22 @@
 import pandas as pd
 import numpy as np
 f1 = pd.read_csv('trainingData2_fake.csv')
-f2 = pd.read_csv('/Users/tangzhe/GitHub/IndoorLoc_a_test/data_silce/building0.csv')
+f2 = pd.read_csv('/Users/tangzhe/GitHub/IndoorLoc_a_test/data_silce/building1.csv')
 f2.loc[:,"FLOOR"] *= 3
 file = [f1,f2]
 train = pd.concat(file)
 train.to_csv("trainingData2" + ".csv", index=0, sep=',')
 train_new = pd.read_csv('trainingData2.csv')
 train_new=train_new.drop(['BUILDINGID','SPACEID','RELATIVEPOSITION','USERID','PHONEID','TIMESTAMP'],axis=1)
-train_new.loc[:,"BUILDINGID"] = np.zeros((len(train_new),1),dtype=int)
+train_new.loc[:,"BUILDINGID"] = np.zeros((len(train_new),1),dtype=int)+1
 train_new.loc[:,"SPACEID"] = np.zeros((len(train_new),1),dtype=int)
 train_new.loc[:,"RELATIVEPOSITION"] = np.zeros((len(train_new),1),dtype=int)
+#train_new.loc[:,"BUILDINGID"] = np.zeros((len(train_new),1),dtype=int)
+#train_new.loc[:,"FLOOR"] = f2.loc[:,"FLOOR"]
 train_new.loc[:,"USERID"] = np.zeros((len(train_new),1),dtype=int)
 train_new.loc[:,"PHONEID"] = np.zeros((len(train_new),1),dtype=int)
 train_new.loc[:,"TIMESTAMP"] = np.zeros((len(train_new),1),dtype=int)
-train_new.to_csv("trainingData2" + ".csv", index=0, sep=',')
+train_new.to_csv("trainingData2_building1" + ".csv", index=0, sep=',')
 
 #To convert the floors in the validation file to data in meters.
 # ff = pd.read_csv('/Users/tangzhe/GitHub/IndoorLoc_a_test/data_silce/validationData2.csv')

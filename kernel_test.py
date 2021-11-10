@@ -1,11 +1,10 @@
-"""
-Author： tangzhetim
-This file is used to test different kernel functions, mainly implemented with RBF and Matern52.
-The problem still to be solved is the sampling logic, compared with the original file,
-fixed the drawing function and the file reading part of the problem,
-and realized the data generation of the whole building.
-
-"""
+# -*- coding:utf-8 -*-
+# @Time : 2021/11/2 4:20 下午
+# @Author: tangzhetim
+# @File : kernel_test.py
+# @brief : This file uses hybrid kernels to generate data on a building-wide scale.
+# Changing the order in which files are written is not recommended because it is associated
+# with other modules.
 
 import os
 import GPy
@@ -57,7 +56,7 @@ def dump_and_load_model(m):
         with open(filename, "wb") as _f:
             m.optimize(messages=True)
             m.optimize_restarts()
-            pk.dump(m, _f)  # Serialize object, save object obj to file f
+            pk.dump(m, _f)
             return m
 
 #n_dim is the index of AP it should be 0-519 WAP001-WAP520
@@ -76,38 +75,25 @@ def plot(xy, z, xy_pred, z_pred, n_dim):
     plt.legend(loc='upper left')
     plt.show()
 
-# read the data of floor 0
-with open("./data_silce/building0.csv", "r") as _file:
-    # all buildings incloud, except for the useless value
-    # df_raw: pd.DataFrame = pd.read_csv(_file).loc[:, "LONGITUDE":"BUILDINGID"]
+############################################################################
+fake_data_for_whole_building = 5196
+# read the data of building 0
+with open("./data_silce/building1.csv", "r") as _file:
     df_raw = pd.read_csv(_file).loc[:, "WAP001":"BUILDINGID"]
 
 # get mean of data which on the same position
 #df = df_raw.groupby(["LONGITUDE", "LATITUDE", "FLOOR"], as_index=False).mean()
 # if do not get the mean of the data
 df = df_raw
-df.to_csv('df.csv',index=False)
-kernel_RBF = GPy.util.multioutput.ICM(
-    input_dim=3, num_outputs=520, kernel=GPy.kern.RBF(3))
-
 xy = df.loc[:, "LONGITUDE":"FLOOR"].to_numpy()
-# xy = df.loc[:, "LONGITUDE":"LATITUDE"].to_numpy()
-print(xy)
 floor = df_raw.loc[:,"FLOOR"].to_numpy()
 floor = floor.reshape(floor.shape[0],1)
 
-# xy_floor = np.concatenate((xy, floor), axis=1)
-
-
-# kernel = GPy.util.multioutput.ICM(
-
-# input_dim=2, num_outputs=520, kernel=GPy.kern.Matern52(2))
-
-# kernel = RBF * matern52  Squared exponential (SE) kernel or Radial Basis Function（RBF）kernel
-#TODO: why choose matern52, the inout of this kernel function can not be 3?
+kernel_RBF = GPy.util.multioutput.ICM(
+    input_dim=3, num_outputs=520, kernel=GPy.kern.RBF(3))
 kernel_Matern52 = GPy.util.multioutput.LCM(
     input_dim=3, num_outputs=520,
-    kernels_list=[GPy.kern.Matern52(3)])  # Matern Radial-basis function kernel (aka squared-exponential kernel)
+    kernels_list=[GPy.kern.Matern52(3)])
 
 # z = df.loc[:, "WAP001": "WAP520"].to_numpy()
 # z = sklearn.preprocessing.normalize(z, norm="l2")
@@ -119,7 +105,7 @@ z = standarder.transform(z_original)
 
 kernel = kernel_RBF * kernel_Matern52
 m = GPy.models.GPCoregionalizedRegression([xy], [z],
-                                          kernel=kernel)  # Gaussian Process model for heteroscedastic multioutput regression
+                                          kernel=kernel)
 m = dump_and_load_model(m)
 # m.optimize_restarts(num_restarts=10)
 data_set = 0  # ??? why set as 0? floor?
@@ -128,7 +114,7 @@ x_max = xy[:, 0].max()
 y_min = xy[:, 1].min()
 y_max = xy[:, 1].max()
 l = []
-fake_data_for_whole_building = 5249
+
 for _ in range(fake_data_for_whole_building):
     l.append([random.uniform(x_min, x_max),
               random.uniform(y_min, y_max), data_set])
@@ -136,10 +122,9 @@ xy_pred = np.array(l)
 
 Y_metadata = {"output_index": xy_pred[:, -1].astype(int)}
 z_pred_raw = m.predict(xy_pred, Y_metadata=Y_metadata)
-z_pred = z_pred_raw[0]  # file main_building_plot.py end in this line
+z_pred = z_pred_raw[0]
 z_pred_ori = standarder.inverse_transform(z_pred).round()
 z_pred_ori_a = pd.DataFrame(z_pred_ori)
-#z_pred_ori_a.to_csv("Data_with_building0.csv",index=0)
 
 #plot(xy, z, xy_pred, z_pred, 1)
 plot(xy,z_original,xy_pred,z_pred_ori,0)
@@ -148,20 +133,15 @@ df_new = pd.DataFrame(z_pred_ori, columns=df_raw.columns[:520]).astype("int64")
 
 df_new["LONGITUDE"] = xy_pred[:, 0]
 df_new["LATITUDE"] = xy_pred[:, 1]
+
 #df_floor = np.zeros(xy_pred[:, 0].shape, dtype=int)
 df_floor = np.random.choice(a=[0,3,6,9], size=fake_data_for_whole_building, replace=True, p=[0.235,0.270,0.270,0.225])
 df_new["FLOOR"] = df_floor
-with open("./trainingData2_fake.csv", "w") as f:
-    f.write(df_new.to_csv(index=False))
-# z = pd.DataFrame(z)
-# z_original = pd.DataFrame(z_original)
-# z_pred = pd.DataFrame(z_pred)
-# z.to_csv('z.csv',index=False)
-# z_original.to_csv('z_original.csv',index=False)
-# z_pred.to_csv('z_pred.csv',index=False)
 df_new["BUILDINGID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
 df_new["SPACEID"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
 df_new["RELATIVEPOSITION"] = np.zeros(xy_pred[:, 0].shape, dtype=int)
-# df_new["USERID"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
-# df_new["PHONEID"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
-# df_new["TIMESTAMP"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
+df_new["USERID"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
+df_new["PHONEID"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
+df_new["TIMESTAMP"] = np.zeros((fake_data_for_whole_building,1),dtype=int)
+with open("./trainingData2_fake.csv", "w") as f:
+    f.write(df_new.to_csv(index=False))
